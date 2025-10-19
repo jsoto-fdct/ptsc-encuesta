@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getEncuestaByCedula } from "../utils/localDb.js";
 
 const AREAS_INTERES = [
   "QUÍMICA",
@@ -24,7 +25,7 @@ const GRADOS = [
 
 const SEXOS = ["Masculino", "Femenino"];
 
-function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue }) {
+function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialData = {} }) {
   const [form, setForm] = useState({
     cedula: "",
     nombres: "",
@@ -34,11 +35,42 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue }) {
     grado: "",
     areaInteres: "",
     liceo: schoolName,
+    mensajeVocacional: "",
+    id: null,
+    ...initialData,
   });
+  const [errorCedula, setErrorCedula] = useState("");
+
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      ...initialData,
+      liceo: schoolName,
+      mensajeVocacional: initialData.mensajeVocacional || "",
+      id: initialData.id || null,
+    }));
+  }, [initialData, schoolName]);
+
+  // Buscar por cédula al desenfocar el campo
+  const handleCedulaBlur = () => {
+    if (form.cedula) {
+      const registro = getEncuestaByCedula(form.cedula);
+      if (registro) {
+        setForm((prev) => ({
+          ...prev,
+          ...registro,
+        }));
+        setErrorCedula("La cédula ya existe, los datos han sido traídos automáticamente.");
+      } else {
+        setErrorCedula(""); // No hay duplicado
+      }
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
+    if (name === "cedula") setErrorCedula(""); // Limpiar error al cambiar cédula
   };
 
   const handleSelectArea = (area) => {
@@ -55,7 +87,7 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onContinue(form);
+    onContinue(form); // El guardado/actualización se maneja en el componente principal
   };
 
   return (
@@ -72,8 +104,12 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue }) {
               name="cedula"
               value={form.cedula}
               onChange={handleInputChange}
+              onBlur={handleCedulaBlur}
               required
             />
+            {errorCedula && (
+              <div className="text-warning small mt-1">{errorCedula}</div>
+            )}
           </div>
           <div className="col-md-6 mb-2">
             <label className="form-label">Nombres</label>
@@ -110,7 +146,7 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue }) {
               required
             />
           </div>
-          {/* Selector de Sexo (como botones, fila propia) */}
+          {/* Selector de Sexo */}
           <div className="col-12 mb-2">
             <label className="form-label mb-2">Sexo</label>
             <div className="btn-group w-100" role="group">
@@ -128,7 +164,7 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue }) {
               ))}
             </div>
           </div>
-          {/* Selector de Grado que cursa (como botones, fila propia) */}
+          {/* Selector de Grado que cursa */}
           <div className="col-12 mb-2">
             <label className="form-label mb-2">Grado que cursa</label>
             <div className="btn-group w-100 flex-wrap" role="group">
@@ -156,6 +192,13 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue }) {
               disabled
             />
           </div>
+          {/* Campo oculto para mensajeVocacional */}
+          <input
+            type="hidden"
+            name="mensajeVocacional"
+            value={form.mensajeVocacional || ""}
+            readOnly
+          />
         </div>
         <h4 className="mt-4 mb-2">Áreas de interés</h4>
         <div className="d-flex flex-column gap-2 mb-4">

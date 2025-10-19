@@ -1,3 +1,4 @@
+/*
 const MENSAJES_AREA = {
   "QUÍMICA": [
     "¿Te gustaría descubrir de qué están hechos los objetos, alimentos o medicamentos que usas y consumes?",
@@ -36,3 +37,5 @@ const MENSAJES_AREA = {
     "¿Te interesa saber cómo la tecnología nos permite ver lo invisible y descubrir cosas nuevas?"
   ],
 };
+*/
+//para guardar

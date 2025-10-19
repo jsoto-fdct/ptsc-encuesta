@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const MENSAJES_AREA = {
   "QUÍMICA": [
@@ -40,9 +40,13 @@ const MENSAJES_AREA = {
 };
 
 function VerificacionVocacional({ datos, onAtras, onFinalizar }) {
-  const { cedula, nombres, apellidos, edad, sexo, grado, areaInteres } = datos;
+  const { cedula, nombres, apellidos, edad, sexo, grado, areaInteres, mensajeVocacional, id } = datos;
   const mensajes = MENSAJES_AREA[areaInteres] || ["Mensaje 1", "Mensaje 2"];
-  const [mensajeSeleccionado, setMensajeSeleccionado] = useState("");
+  const [mensajeSeleccionado, setMensajeSeleccionado] = useState(mensajeVocacional || "");
+
+  useEffect(() => {
+    setMensajeSeleccionado(mensajeVocacional || "");
+  }, [mensajeVocacional]);
 
   const handleSeleccion = (mensaje) => setMensajeSeleccionado(mensaje);
 
@@ -87,12 +91,11 @@ function VerificacionVocacional({ datos, onAtras, onFinalizar }) {
           type="button"
           className="btn btn-success"
           onClick={handleFinalizar}
-          disabled={!mensajeSeleccionado}
+          disabled={mensajeSeleccionado === ""}
         >
           Guardar y finalizar
         </button>
       </div>
-      {/* Imagen al final */}
       <div className="my-5 d-flex justify-content-center align-items-center" style={{ minHeight: "160px" }}>
         <img
           src="/LogoSemilleroP.png"

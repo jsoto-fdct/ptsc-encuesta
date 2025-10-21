@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { createClient } from '@supabase/supabase-js';
+import * as XLSX from 'xlsx';
 
 // Supabase config
 const supabaseUrl = 'https://vwzxbqpgdsadmhzgugrj.supabase.co';
@@ -67,15 +68,50 @@ function exportToCSV(registros) {
   }
 }
 
+function exportToExcel(registros) {
+  if (!registros || registros.length === 0) {
+    alert("No hay datos para exportar.");
+    return;
+  }
+  const wsData = [
+    [
+      "Cédula",
+      "Nombres",
+      "Apellidos",
+      "Edad",
+      "Sexo",
+      "Grado",
+      "Liceo",
+      "Área de interés",
+      "Mensaje vocacional"
+    ],
+    ...registros.map(reg => [
+      reg.cedula,
+      reg.nombres,
+      reg.apellidos,
+      reg.edad,
+      reg.sexo,
+      reg.grado,
+      reg.liceo,
+      reg.areaInteres,
+      reg.mensajeVocacional || ""
+    ])
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, "Encuestados");
+  const marca = fechaMarca();
+  const fileName = `PTSC-trujillo-${marca}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+}
+
 async function importarASupabase(registros, setStatus) {
   if (!registros || registros.length === 0) {
     setStatus("No hay datos para importar.");
     return;
   }
   setStatus("Importando...");
-  // Limita por lote si la tabla es muy grande
   try {
-    // Puedes ajustar los campos según la tabla de supabase
     const insertables = registros.map(reg => ({
       cedula: reg.cedula,
       nombres: reg.nombres,
@@ -88,7 +124,7 @@ async function importarASupabase(registros, setStatus) {
       mensaje_vocacional: reg.mensajeVocacional || "",
       //marca_tiempo: fechaMarca(),
     }));
-    const { error } = await supabase.from('Encuestados').insert(insertables);
+    const { error } = await supabase.from('encuestados').insert(insertables);
     if (error) {
       setStatus("Error al importar: " + error.message);
     } else {
@@ -111,7 +147,13 @@ function Encuestados({ onInicio }) {
           className="btn btn-primary"
           onClick={() => exportToCSV(registros)}
         >
-          Guardar en el teléfono
+          Guardar en el teléfono (CSV)
+        </button>
+        <button
+          className="btn btn-success"
+          onClick={() => exportToExcel(registros)}
+        >
+          Guardar en el teléfono (Excel)
         </button>
         <button
           className="btn btn-info"
@@ -170,7 +212,6 @@ function Encuestados({ onInicio }) {
           Inicio
         </button>
       </div>
-      {/* Modal o detalles debajo */}
       {detalles && (
         <div className="mt-4 p-3 border rounded bg-light">
           <h5 className="text-center">Detalle de estudiante</h5>

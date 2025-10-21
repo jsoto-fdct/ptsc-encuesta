@@ -25,6 +25,12 @@ const GRADOS = [
 
 const SEXOS = ["Masculino", "Femenino"];
 
+// Busca estudiante en la tabla local de estudiantes
+function buscarEstudiantePorCedula(cedula) {
+  const estudiantes = JSON.parse(localStorage.getItem("estudiantes") || "[]");
+  return estudiantes.find(e => String(e.cedula) === String(cedula));
+}
+
 function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialData = {}, onInicio }) {
   const [form, setForm] = useState({
     cedula: "",
@@ -51,17 +57,32 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialD
     }));
   }, [initialData, schoolName]);
 
+  // Buscar por cédula al desenfocar
   const handleCedulaBlur = () => {
     if (form.cedula) {
+      // Primero buscar en encuestas
       const registro = getEncuestaByCedula(form.cedula);
       if (registro) {
         setForm((prev) => ({
           ...prev,
           ...registro,
         }));
-        setErrorCedula("La cédula ya existe, los datos han sido traídos automáticamente.");
+        setErrorCedula("La cédula ya existe en encuestas, los datos han sido traídos automáticamente.");
+        return;
+      }
+      // Si no hay en encuestas, buscar en estudiantes
+      const estudiante = buscarEstudiantePorCedula(form.cedula);
+      if (estudiante) {
+        setForm((prev) => ({
+          ...prev,
+          ...estudiante,
+          liceo: schoolName,
+          mensajeVocacional: prev.mensajeVocacional,
+          id: prev.id
+        }));
+        setErrorCedula("La cédula fue encontrada en la base de estudiantes, datos traídos automáticamente.");
       } else {
-        setErrorCedula("");
+        setErrorCedula(""); // No hay duplicado
       }
     }
   };
@@ -97,7 +118,7 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialD
             Inicio
           </button>
         </div>
-        <h3 className="mb-3">Datos personales</h3>
+        <h3 className="mb-3 text-center">Datos personales</h3>
         <div className="row mb-3">
           <div className="col-md-6 mb-2">
             <label className="form-label">Cédula</label>
@@ -234,7 +255,6 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialD
         >
           Continuar
         </button>
-        {/* Espacio grande para la imagen */}
         <div className="my-5 d-flex justify-content-center align-items-center" style={{ minHeight: "200px" }}>
           <img
             src="/LogoSemilleroP.png"

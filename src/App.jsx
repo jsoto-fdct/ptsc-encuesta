@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Home from "./components/Home.jsx";
 import DatosPersonales from "./components/DatosPersonales.jsx";
 import VerificacionVocacional from "./components/VerificacionVocacional.jsx";
 import EncuestaFinalizada from "./components/EncuestaFinalizada.jsx";
 import Liceos from "./components/Liceos.jsx";
 import Encuestados from "./components/Encuestados.jsx";
+import Estudiantes from "./components/Estudiantes.jsx";
 import { saveOrUpdateEncuesta, updateMensajeVocacional, getEncuesta, setLiceoSeleccionado, getLiceoSeleccionado } from "./utils/localDb.js";
 
 function App() {
@@ -12,10 +13,6 @@ function App() {
   const [datos, setDatos] = useState({});
   const [currentId, setCurrentId] = useState(null);
   const [schoolName, setSchoolName] = useState(getLiceoSeleccionado());
-
-  useEffect(() => {
-    setSchoolName(getLiceoSeleccionado());
-  }, []);
 
   const handleNavigate = (destino) => setPantalla(destino);
 
@@ -101,6 +98,11 @@ function App() {
       )}
       {pantalla === "encuestados" && (
         <Encuestados
+          onInicio={handleInicio}
+        />
+      )}
+      {pantalla === "estudiantes" && (
+        <Estudiantes
           onInicio={handleInicio}
         />
       )}

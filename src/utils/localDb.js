@@ -4,10 +4,8 @@ export function saveOrUpdateEncuesta(data) {
   let id = data.id || Date.now();
   const idx = registros.findIndex((r) => String(r.cedula) === String(data.cedula));
   if (idx !== -1) {
-    // Actualizar registro existente
     registros[idx] = { ...registros[idx], ...data, id };
   } else {
-    // Crear nuevo registro
     registros.push({ ...data, id });
   }
   localStorage.setItem("encuestas", JSON.stringify(registros));

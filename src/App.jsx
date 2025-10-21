@@ -1,26 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Home from "./components/Home.jsx";
 import DatosPersonales from "./components/DatosPersonales.jsx";
 import VerificacionVocacional from "./components/VerificacionVocacional.jsx";
 import EncuestaFinalizada from "./components/EncuestaFinalizada.jsx";
-import { saveOrUpdateEncuesta, updateMensajeVocacional, getEncuesta } from "./utils/localDb.js";
+import Liceos from "./components/Liceos.jsx";
+import Encuestados from "./components/Encuestados.jsx";
+import { saveOrUpdateEncuesta, updateMensajeVocacional, getEncuesta, setLiceoSeleccionado, getLiceoSeleccionado } from "./utils/localDb.js";
 
 function App() {
   const [pantalla, setPantalla] = useState("home");
   const [datos, setDatos] = useState({});
   const [currentId, setCurrentId] = useState(null);
-  const SCHOOL_NAME = "Liceo Nacional Simón Bolívar";
+  const [schoolName, setSchoolName] = useState(getLiceoSeleccionado());
 
-  // Al guardar datos personales, actualiza/crea el registro por cédula
+  useEffect(() => {
+    setSchoolName(getLiceoSeleccionado());
+  }, []);
+
+  const handleNavigate = (destino) => setPantalla(destino);
+
   const handleContinueDatos = (formData) => {
-    const id = saveOrUpdateEncuesta(formData); // si existe, actualiza; si no, crea
+    const id = saveOrUpdateEncuesta({ ...formData, liceo: schoolName });
     setCurrentId(id);
     const registro = getEncuesta(id);
     setDatos(registro);
     setPantalla("verificacion");
   };
 
-  // Al volver atrás desde verificación vocacional, muestra datos actuales
   const handleAtras = () => {
     if (currentId) {
       const registro = getEncuesta(currentId);
@@ -29,7 +35,6 @@ function App() {
     setPantalla("datos");
   };
 
-  // Al finalizar verificación, guarda el mensajeVocacional
   const handleFinalizar = (finalData) => {
     if (currentId) {
       updateMensajeVocacional(currentId, finalData.mensajeVocacional || "");
@@ -51,16 +56,27 @@ function App() {
     setPantalla("home");
   };
 
+  const handleSelectLiceo = (selected) => {
+    setSchoolName(selected);
+    setLiceoSeleccionado(selected);
+    setPantalla("home");
+  };
+
   return (
     <div>
       {pantalla === "home" && (
-        <Home onStartSurvey={() => setPantalla("datos")} schoolName={SCHOOL_NAME} />
+        <Home
+          onStartSurvey={() => setPantalla("datos")}
+          schoolName={schoolName}
+          onNavigate={handleNavigate}
+        />
       )}
       {pantalla === "datos" && (
         <DatosPersonales
-          schoolName={SCHOOL_NAME}
+          schoolName={schoolName}
           onContinue={handleContinueDatos}
           initialData={datos}
+          onInicio={handleInicio}
         />
       )}
       {pantalla === "verificacion" && (
@@ -73,6 +89,18 @@ function App() {
       {pantalla === "finalizado" && (
         <EncuestaFinalizada
           onReiniciar={handleReiniciar}
+          onInicio={handleInicio}
+        />
+      )}
+      {pantalla === "liceos" && (
+        <Liceos
+          selectedSchool={schoolName}
+          onSelect={handleSelectLiceo}
+          onInicio={handleInicio}
+        />
+      )}
+      {pantalla === "encuestados" && (
+        <Encuestados
           onInicio={handleInicio}
         />
       )}

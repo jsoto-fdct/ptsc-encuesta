@@ -35,3 +35,11 @@ export function getEncuestaByCedula(cedula) {
   const registros = JSON.parse(localStorage.getItem("encuestas") || "[]");
   return registros.find((r) => String(r.cedula) === String(cedula));
 }
+
+// Guardar y obtener liceo seleccionado
+export function setLiceoSeleccionado(liceo) {
+  localStorage.setItem("liceoSeleccionado", liceo);
+}
+export function getLiceoSeleccionado() {
+  return localStorage.getItem("liceoSeleccionado") || "Liceo Nacional Simón Bolívar";
+}

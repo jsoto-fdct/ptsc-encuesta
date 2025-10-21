@@ -25,7 +25,7 @@ const GRADOS = [
 
 const SEXOS = ["Masculino", "Femenino"];
 
-function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialData = {} }) {
+function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialData = {}, onInicio }) {
   const [form, setForm] = useState({
     cedula: "",
     nombres: "",
@@ -51,7 +51,6 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialD
     }));
   }, [initialData, schoolName]);
 
-  // Buscar por cédula al desenfocar el campo
   const handleCedulaBlur = () => {
     if (form.cedula) {
       const registro = getEncuestaByCedula(form.cedula);
@@ -62,7 +61,7 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialD
         }));
         setErrorCedula("La cédula ya existe, los datos han sido traídos automáticamente.");
       } else {
-        setErrorCedula(""); // No hay duplicado
+        setErrorCedula("");
       }
     }
   };
@@ -70,7 +69,7 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialD
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-    if (name === "cedula") setErrorCedula(""); // Limpiar error al cambiar cédula
+    if (name === "cedula") setErrorCedula("");
   };
 
   const handleSelectArea = (area) => {
@@ -87,12 +86,17 @@ function DatosPersonales({ schoolName = "Nombre del Liceo", onContinue, initialD
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onContinue(form); // El guardado/actualización se maneja en el componente principal
+    onContinue(form);
   };
 
   return (
-    <div className="container p-3">
-      <form className="mt-4" onSubmit={handleSubmit}>
+    <div className="container p-3 d-flex flex-column align-items-center justify-content-center">
+      <form className="mt-4 w-100" style={{ maxWidth: 500 }} onSubmit={handleSubmit}>
+        <div className="mb-3 text-end">
+          <button type="button" className="btn btn-outline-secondary btn-sm" onClick={onInicio}>
+            Inicio
+          </button>
+        </div>
         <h3 className="mb-3">Datos personales</h3>
         <div className="row mb-3">
           <div className="col-md-6 mb-2">

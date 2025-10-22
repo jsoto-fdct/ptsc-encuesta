@@ -105,14 +105,21 @@ function exportToExcel(registros) {
   XLSX.writeFile(wb, fileName);
 }
 
-async function importarASupabase(registros, setStatus) {
+async function importarASupabase(registros, setStatus, setRegistros) {
   if (!registros || registros.length === 0) {
     setStatus("No hay datos para importar.");
     return;
   }
   setStatus("Importando...");
   try {
-    const insertables = registros.map(reg => ({
+    // Solo enviar los registros que no tengan campo cargado
+    const registrosNoCargados = registros.filter(r => !r.cargado);
+    if (registrosNoCargados.length === 0) {
+      setStatus("Todos los registros ya han sido cargados.");
+      return;
+    }
+    const marca = fechaMarca();
+    const insertables = registrosNoCargados.map(reg => ({
       cedula: reg.cedula,
       nombres: reg.nombres,
       apellidos: reg.apellidos,
@@ -122,12 +129,20 @@ async function importarASupabase(registros, setStatus) {
       liceo: reg.liceo,
       area_interes: reg.areaInteres,
       mensaje_vocacional: reg.mensajeVocacional || "",
-      //marca_tiempo: fechaMarca(),
+      marca_tiempo: marca,
     }));
     const { error } = await supabase.from('encuestados').insert(insertables);
     if (error) {
       setStatus("Error al importar: " + error.message);
     } else {
+      // Marca los registros como cargados en localStorage
+      const nuevosRegistros = registros.map(r =>
+        !r.cargado && registrosNoCargados.find(rc => rc.cedula === r.cedula)
+          ? { ...r, cargado: marca }
+          : r
+      );
+      localStorage.setItem("encuestas", JSON.stringify(nuevosRegistros));
+      setRegistros(nuevosRegistros);
       setStatus("¡Importación exitosa!");
     }
   } catch (err) {
@@ -138,10 +153,72 @@ async function importarASupabase(registros, setStatus) {
 function Encuestados({ onInicio }) {
   const [detalles, setDetalles] = useState(null);
   const [importStatus, setImportStatus] = useState("");
-  const registros = JSON.parse(localStorage.getItem("encuestas") || "[]");
+  const [registros, setRegistros] = useState(JSON.parse(localStorage.getItem("encuestas") || "[]"));
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [tokenInput, setTokenInput] = useState("");
+  const [showToken, setShowToken] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const eliminarEncuestas = () => {
+    setShowDeleteConfirm(true);
+    setDeleteError("");
+    setTokenInput("");
+    setShowToken(false);
+  };
+
+  const confirmarEliminar = () => {
+    setShowToken(true);
+    setDeleteError("");
+  };
+
+  const realizarEliminacion = () => {
+    if (tokenInput === "2810") {
+      localStorage.removeItem("encuestas");
+      setRegistros([]);
+      setShowDeleteConfirm(false);
+      setShowToken(false);
+      setTokenInput("");
+      setDeleteError("");
+    } else {
+      setDeleteError("Token incorrecto. Intente de nuevo.");
+    }
+  };
 
   return (
     <div className="container p-4">
+      <div className="d-flex justify-content-center mb-3">
+        <button
+          className="btn btn-danger"
+          onClick={eliminarEncuestas}
+        >
+          Eliminar encuestas realizadas
+        </button>
+      </div>
+      {/* Confirmación modal simple */}
+      {showDeleteConfirm && (
+        <div className="mb-3 p-3 border rounded bg-light text-center">
+          <p className="mb-2"><strong>¿Está seguro que desea eliminar todas las encuestas realizadas?</strong></p>
+          <button className="btn btn-secondary me-2" onClick={() => setShowDeleteConfirm(false)}>Cancelar</button>
+          <button className="btn btn-warning" onClick={confirmarEliminar}>Confirmar</button>
+          {showToken && (
+            <div className="mt-3">
+              <label className="mb-2">Ingrese el token de seguridad (4 dígitos):</label>
+              <input
+                type="number"
+                className="form-control mb-2"
+                value={tokenInput}
+                onChange={e => setTokenInput(e.target.value)}
+                maxLength={4}
+              />
+              <button className="btn btn-danger" onClick={realizarEliminacion}>Eliminar definitivamente</button>
+              {deleteError && (
+                <div className="text-danger mt-2">{deleteError}</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      <div style={{height: 16}}></div>
       <div className="d-flex justify-content-center gap-3 mb-3">
         <button
           className="btn btn-primary"
@@ -156,8 +233,9 @@ function Encuestados({ onInicio }) {
           Guardar en el teléfono (Excel)
         </button>
         <button
-          className="btn btn-info"
-          onClick={() => importarASupabase(registros, setImportStatus)}
+          className="btn btn-warning"
+          style={{color: "#222"}}
+          onClick={() => importarASupabase(registros, setImportStatus, setRegistros)}
         >
           Enviar a Supabase
         </button>
@@ -194,12 +272,27 @@ function Encuestados({ onInicio }) {
                   <td>{reg.grado}</td>
                   <td>{reg.areaInteres}</td>
                   <td>
-                    <button
-                      className="btn btn-sm btn-info"
-                      onClick={() => setDetalles(reg)}
-                    >
-                      Ver
-                    </button>
+                    <div className="d-flex flex-column align-items-center gap-1">
+                      <button
+                        className="btn btn-sm btn-info"
+                        onClick={() => setDetalles(reg)}
+                      >
+                        Ver
+                      </button>
+                      {reg.cargado && (
+                        <span
+                          className="badge"
+                          style={{
+                            backgroundColor: "#ffc107",
+                            color: "#222",
+                            fontWeight: "bold",
+                            fontSize: "0.85em",
+                          }}
+                        >
+                          Cargado: {reg.cargado}
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -225,6 +318,21 @@ function Encuestados({ onInicio }) {
             <li><strong>Liceo:</strong> {detalles.liceo}</li>
             <li><strong>Área de interés:</strong> {detalles.areaInteres}</li>
             <li><strong>Mensaje vocacional:</strong> {detalles.mensajeVocacional}</li>
+            {detalles.cargado && (
+              <li className="pt-2">
+                <span
+                  className="badge"
+                  style={{
+                    backgroundColor: "#ffc107",
+                    color: "#222",
+                    fontWeight: "bold",
+                    fontSize: "0.85em",
+                  }}
+                >
+                  Cargado en Supabase: {detalles.cargado}
+                </span>
+              </li>
+            )}
           </ul>
           <button className="btn btn-secondary" onClick={() => setDetalles(null)}>
             Cerrar

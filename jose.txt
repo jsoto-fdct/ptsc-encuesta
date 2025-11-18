@@ -1,0 +1,4 @@
+// Supabase config
+const supabaseUrl = 'https://vwzxbqpgdsadmhzgugrj.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3enhicXBnZHNhZG1oemd1Z3JqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5MzIyMTEsImV4cCI6MjA3NjUwODIxMX0.rA3A1K3t5E1-mw_mPuNMGLjSj8ehEhmZZbVFv7O4zDw';
+const supabase = createClient(supabaseUrl, supabaseKey);

@@ -29,7 +29,7 @@ const MENSAJES_AREA = {
     "¿Te interesa cuidar la vida en el planeta, los animales y los recursos naturales?",
     "¿Te gustaría crear ideas para que las personas vivan bien sin dañar el ambiente?"
   ],
-  "FÍSICA Y MATEMATICA": [
+  "FÍSICA Y MATEMÁTICA": [
     "¿Te gusta resolver problemas usando lógica o hacer cálculos para entender cómo funcionan las cosas?",
     "¿Te gustaría descubrir por qué un cohete puede llegar al espacio, cómo la energía del sol llega hasta nosotros para calentar la Tierra, o por qué una pelota de baloncesto siempre cae al suelo?"
   ],

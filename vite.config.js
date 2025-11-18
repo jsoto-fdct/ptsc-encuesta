@@ -7,6 +7,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: [
+        'LogoSemilleroP.png'
+      ],
       manifest: {
         name: 'PTSC Encuesta',
         short_name: 'Encuesta',
